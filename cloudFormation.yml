@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Lambda with HTTP API gateway Resume stack
+
+Resources:
+  ResumeApiGateway:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: Resume API Gateway
+      ProtocolType: HTTP
+
+  ResumeApiStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref ResumeApiGateway
+      StageName: live
+      Description: Live Stage
+      AutoDeploy: true
+
+  ResumeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Runtime: "nodejs12.x"
+      InlineCode: |
+        exports.handler = function(event, context, callback) {
+            console.log(event);
+            const response = {
+                statusCode: 200,
+                body: JSON.stringify('Hello Node rule 1')
+            };
+            callback(null, response);
+        };
+
+  ResumeLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ResumeFunction
+      Action: "lambda:InvokeFunction"
+      Principal: apigateway.amazonaws.com
+
+  ResumeIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ResumeApiGateway
+      Description: Lambda proxy integration
+      IntegrationType: AWS_PROXY
+      IntegrationMethod: POST
+      PayloadFormatVersion: "2.0"
+      IntegrationUri: !Sub 'arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ResumeFunction.Arn}/invocations'
+
+  ResumeApiRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ResumeApiGateway
+      RouteKey: "GET /Resume"
+      AuthorizationType: AWS_IAM
+      Target: !Join
+        - /
+        - - integrations
+          - !Ref ResumeIntegration
