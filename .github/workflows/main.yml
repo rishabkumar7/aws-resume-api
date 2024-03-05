@@ -1,5 +1,10 @@
 name: Deploy to lambda
-on: [push]
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
 jobs:
 
   deploy_source:
