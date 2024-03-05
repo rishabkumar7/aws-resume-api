@@ -9,7 +9,7 @@ def lambda_handler(event, context):
     try:
         response = table.get_item(
             Key={
-                'id': '1'  # Assuming you want to fetch the resume with id '1'
+                'id': '1'  #Assuming you want to fetch the resume with id '1'
             }
         )
         
